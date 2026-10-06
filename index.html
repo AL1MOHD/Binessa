@@ -139,15 +139,17 @@ const LOGO_SRC = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAXwAAAGZCAYAAACK
 const W=1080,H=1350,GOLD='#A6802F',GOLD_L='#D9B86A';
 const TYPES={
  birth:{label:'مولود',desc:'أسماء الوالدين واسم المولود',tag:'مولود جديد',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
- wedding:{label:'زواج',desc:'اسم العريس وأهل العروس',tag:'زواج',p:'#5E2440',bg:'#F9F4F1',body:'#6B5359'},
- engage:{label:'خطوبة',desc:'اسم الخاطب وأهل المخطوبة',tag:'خطوبة',p:'#7A3150',bg:'#FBF3EF',body:'#6B5359'},
- grad:{label:'تخرج',desc:'اسم الخريج والمؤهل',tag:'تخرج',p:'#26584A',bg:'#F5F2E8',body:'#4F5C55'},
- general:{label:'نص حر',desc:'عنوان وتفاصيل لأي مناسبة أخرى',tag:'خبر',p:'#23495A',bg:'#F4F5F3',body:'#56656F'}
+ wedding:{label:'زواج',desc:'اسم العريس وأهل العروس',tag:'زواج',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
+ engage:{label:'خطوبة',desc:'اسم الخاطب وأهل المخطوبة',tag:'خطوبة',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
+ aqd:{label:'عقد قران',desc:'اسم العريس وأهل العروس',tag:'عقد قران',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
+ grad:{label:'تخرج',desc:'اسم الخريج والمؤهل',tag:'تخرج',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
+ general:{label:'نص حر',desc:'عنوان وتفاصيل لأي مناسبة أخرى',tag:'خبر',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'}
 };
 const FIELDS={
  birth:[['relation','صلة القرابة','ابن العم'],['father','اسم الأب',''],['mother','اسم الأم',''],['child','اسم المولود',''],['gender','gender']],
  wedding:[['relation','صلة القرابة','ابن العم'],['groom','اسم العريس',''],['bride','كريمة (اسم والد العروس أو عائلتها)','']],
  engage:[['relation','صلة القرابة','ابن العم'],['groom','اسم الخاطب',''],['bride','كريمة (اسم والد المخطوبة أو عائلتها)','']],
+ aqd:[['relation','صلة القرابة','ابن العم'],['groom','اسم العريس',''],['bride','كريمة (اسم والد العروس أو عائلتها)','']],
  grad:[['gender','gender'],['relation','صلة القرابة','ابن العم'],['name','اسم الخريج',''],['degree','المؤهل والجهة','']],
  general:[['title','عنوان الخبر',''],['body','نص الخبر','',true],['closing','سطر الختام (اختياري)','']]
 };
@@ -167,6 +169,10 @@ function lines(){
   {t:'بقلوب يملؤها الفرح نزف '+rel('ابن العم'),k:'s',g:0},{t:v('groom'),k:'h',g:0},
   {t:'بمناسبة زواجه الميمون من كريمة',k:'s',g:1},{t:v('bride'),k:'n',g:1},
   {t:'بارك الله لهما وبارك عليهما وجمع بينهما في خير',k:'d',g:2},{t:'ألف ألف مبروك',k:'c',g:3}];
+ if(T==='aqd')return[
+  {t:'بحمد الله وتوفيقه تم عقد قران '+rel('ابن العم'),k:'s',g:0},{t:v('groom'),k:'h',g:0},
+  {t:'على كريمة',k:'s',g:1},{t:v('bride'),k:'n',g:1},
+  {t:'بارك الله لهما وبارك عليهما وجمع بينهما في خير',k:'d',g:2},{t:'ألف ألف مبروك',k:'c',g:3}];
  if(T==='engage')return[
   {t:'بحمد الله وتوفيقه تمت خطوبة '+rel('ابن العم'),k:'s',g:0},{t:v('groom'),k:'h',g:0},
   {t:'على كريمة',k:'s',g:1},{t:v('bride'),k:'n',g:1},
@@ -185,7 +191,7 @@ function curLines(){return (st.manual&&st.manualLines?st.manualLines:lines()).fi
 const PALETTES=[
  {name:'كحلي',p:'#1F3F5B'},{name:'عنابي',p:'#5E2440'},{name:'وردي',p:'#7A3150'},{name:'زيتوني',p:'#26584A'},
  {name:'أزرق مخضر',p:'#23495A'},{name:'بنفسجي',p:'#4A3B6B'},{name:'بني',p:'#5C4024'},{name:'أسود',p:'#22262A'}];
-const TAGS=['مولود جديد','زواج','خطوبة','تخرج','تهنئة','خبر'];
+const TAGS=['مولود جديد','زواج','عقد قران','خطوبة','تخرج','تهنئة','خبر'];
 function hex2rgb(h){h=h.replace('#','');return[parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
 function rgb2hex(a){return'#'+a.map(x=>Math.round(Math.max(0,Math.min(255,x))).toString(16).padStart(2,'0')).join('');}
 function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((x,i)=>x+(B[i]-x)*t));}
