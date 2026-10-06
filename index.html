@@ -32,6 +32,7 @@ header.top{max-width:1100px;margin:0 auto;padding:20px 16px 0}
 header.top h1{margin:0;font-size:24px;font-weight:900}
 header.top p{margin:4px 0 0;color:var(--muted);font-size:15px}
 .preview{flex:1 1 380px;min-width:0;position:sticky;top:12px}
+@media (max-width: 820px){.preview{position:static}}
 .preview canvas{width:100%;height:auto;display:block;border-radius:14px;box-shadow:0 2px 14px rgba(0,0,0,.12);touch-action:none;cursor:grab;background:#eee}
 .hint{color:var(--muted);font-size:13px;margin:8px 2px 0;text-align:center}
 .panel{flex:999 1 420px;min-width:0;display:flex;flex-direction:column;gap:16px}
@@ -264,8 +265,10 @@ function layout(ls,s,maxW){
   const hero=l.t.length<=12?80:58;
   const fo=fontOf(l.k,s,hero);ctx.font=fo.f;
   if(lastG!==null&&l.g!==lastG)y+=18*s;lastG=l.g;
-  wrap(l.t,maxW).forEach(row=>{const lh=fo.size*fo.lh;items.push({row,k:l.k,f:fo.f,y:y+lh/2});y+=lh;});
-  if(l.k==='h'){items.push({rule:true,y:y+6*s});y+=14*s;}
+  ctx.textBaseline='middle';let lastBottom=0;
+  wrap(l.t,maxW).forEach(row=>{const lh=fo.size*fo.lh;const cy=y+lh/2;items.push({row,k:l.k,f:fo.f,y:cy});
+   const m=ctx.measureText(row);lastBottom=cy+(m.actualBoundingBoxDescent||fo.size*0.3);y+=lh;});
+  if(l.k==='h'){const ry=Math.max(y+6*s,lastBottom+14*s);items.push({rule:true,y:ry});y=ry+8*s;}
  });
  return{items,h:y};
 }
