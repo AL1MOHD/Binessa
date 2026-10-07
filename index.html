@@ -267,17 +267,22 @@ function fontOf(k,s,heroSize){
  return{f:FW()+' '+(32*s)+'px '+FF(),size:32*s,lh:1.4};}
 function wrap(text,maxW){const words=text.split(/\s+/);const out=[];let cur='';words.forEach(w=>{const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){out.push(cur);cur=w;}else cur=t;});if(cur)out.push(cur);return out;}
 function layout(ls,s,maxW){
- const items=[];let y=0,lastG=null;
+ const items=[];let y=0,lastG=null,prevBottom=null;
  ls.forEach(l=>{
   const hero=l.t.length<=12?80:58;
   const fo=fontOf(l.k,s,hero);ctx.font=fo.f;
   if(lastG!==null&&l.g!==lastG)y+=16*s;lastG=l.g;
   ctx.textBaseline='middle';let lastBottom=0;
-  wrap(l.t,maxW).forEach(row=>{const lh=fo.size*fo.lh;const cy=y+lh/2;items.push({row,k:l.k,f:fo.f,y:cy});
-   const m=ctx.measureText(row);lastBottom=cy+(m.actualBoundingBoxDescent||fo.size*0.3);y+=lh;});
-  if(l.k==='h'){const ry=Math.max(y+6*s,lastBottom+14*s);items.push({rule:true,y:ry});y=ry+8*s;}
+  wrap(l.t,maxW).forEach(row=>{const lh=fo.size*fo.lh;let cy=y+lh/2;
+   const m=ctx.measureText(row);
+   const asc=m.actualBoundingBoxAscent||fo.size*0.5, desc=m.actualBoundingBoxDescent||fo.size*0.3;
+   // keep a clear gap between this row's tallest mark (e.g. shadda in the word Allah) and the row above
+   if(prevBottom!==null){const need=prevBottom+8*s-(cy-asc);if(need>0){cy+=need;y+=need;}}
+   items.push({row,k:l.k,f:fo.f,y:cy});
+   lastBottom=cy+desc;prevBottom=lastBottom;y+=lh;});
+  if(l.k==='h'){const ry=Math.max(y+6*s,lastBottom+14*s);items.push({rule:true,y:ry});y=ry+8*s;prevBottom=ry+2*s;}
  });
- return{items,h:y};
+ return{items,h:Math.max(y,prevBottom||0)};
 }
 const FONTS={display:{fam:"'Thmanyah Serif Display','Thmanyah Sans','Segoe UI',Tahoma,sans-serif",w:'700'},text:{fam:"'Thmanyah Serif Text','Thmanyah Sans','Segoe UI',Tahoma,sans-serif",w:'500'}};
 function FF(){return FONTS[st.font].fam;}function FW(){return FONTS[st.font].w;}
