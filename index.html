@@ -142,6 +142,9 @@ const TYPES={
  wedding:{label:'زواج',desc:'اسم العريس وأهل العروس',tag:'زواج',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
  engage:{label:'خطوبة',desc:'اسم الخاطب وأهل المخطوبة',tag:'خطوبة',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
  aqd:{label:'عقد قران',desc:'اسم العريس وأهل العروس',tag:'عقد قران',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
+ wafat:{label:'وفاة',desc:'اسم المتوفى والدعاء له',tag:'وفاة',p:'#2B2D30',bg:'#F2F1EF',body:'#5F6163'},
+ aza:{label:'عزاء',desc:'الدفن ومواعيد العزاء وأماكنه',tag:'عزاء',p:'#2B2D30',bg:'#F2F1EF',body:'#5F6163'},
+ invite:{label:'دعوة زواج',desc:'الداعي والعروسان والموعد والمكان',tag:'دعوة زواج',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
  grad:{label:'تخرج',desc:'اسم الخريج والمؤهل',tag:'تخرج',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'},
  general:{label:'نص حر',desc:'عنوان وتفاصيل لأي مناسبة أخرى',tag:'خبر',p:'#1F3F5B',bg:'#F7F4EE',body:'#56656F'}
 };
@@ -150,13 +153,24 @@ const FIELDS={
  wedding:[['relation','صلة القرابة','ابن العم'],['groom','اسم العريس',''],['bride','كريمة (اسم والد العروس أو عائلتها)','']],
  engage:[['relation','صلة القرابة','ابن العم'],['groom','اسم الخاطب',''],['bride','كريمة (اسم والد المخطوبة أو عائلتها)','']],
  aqd:[['relation','صلة القرابة','ابن العم'],['groom','اسم العريس',''],['bride','كريمة (اسم والد العروس أو عائلتها)','']],
+ wafat:[['gender','gender'],['relation','صلة القرابة','ابن العم'],['name','اسم المتوفى','']],
+ aza:[['gender','gender'],['name','اسم المتوفى',''],['burial','موعد ومكان الدفن (سطر لكل معلومة)','',true],['men','عزاء الرجال (اختياري)','',true],['women','عزاء النساء (اختياري)','',true]],
+ invite:[['inviter','اسم الداعي (مثل والد العريس)',''],['kin','صلة العريس بالداعي','ابنه'],['groom','اسم العريس',''],['bride','كريمة (اسم والد العروس أو عائلتها)',''],['day','اليوم','الخميس'],['date','التاريخ','١٥ ربيع الآخر ١٤٤٨هـ'],['venue','المكان (قاعة أو استراحة)',''],['invOn','toggle'],['inviters','الداعون (اسم في كل سطر)','',true]],
  grad:[['gender','gender'],['relation','صلة القرابة','ابن العم'],['name','اسم الخريج',''],['degree','المؤهل والجهة','']],
  general:[['title','عنوان الخبر',''],['body','نص الخبر','',true],['closing','سطر الختام (اختياري)','']]
 };
-const PH={father:'[اسم الأب]',mother:'[اسم الأم]',child:'[اسم المولود]',groom:'[الاسم]',bride:'[الاسم]',name:'[الاسم]',degree:'[المؤهل والجهة]',title:'[عنوان الخبر]',body:'[نص الخبر]'};
+const PH={burial:'[موعد ومكان الدفن]',inviter:'[اسم الداعي]',day:'[اليوم]',date:'[التاريخ]',venue:'[المكان]',father:'[اسم الأب]',mother:'[اسم الأم]',child:'[اسم المولود]',groom:'[الاسم]',bride:'[الاسم]',name:'[الاسم]',degree:'[المؤهل والجهة]',title:'[عنوان الخبر]',body:'[نص الخبر]'};
 const st={font:'display',design:'split',color:null,tag:null,type:'birth',vals:{},gender:'m',manual:false,manualLines:null,img:null,zoom:1,ox:0,oy:0};
 function v(k){const x=(st.vals[st.type]||{})[k];return (x&&x.trim())?x.trim():(PH[k]||'');}
-function rel(def){const x=(st.vals[st.type]||{}).relation; if(x&&x.trim())return x.trim(); return st.gender==='f'&&st.type==='grad'?'ابنة العم':def;}
+function invitersLines(){
+ const iv=st.vals.invite||{}; if(!iv.invOn)return[];
+ const names=(iv.inviters||'').split(/\n|،|,/).map(x=>x.trim()).filter(Boolean);
+ const out=[{t:'الداعون',k:'s',g:5}];
+ if(!names.length){out.push({t:'[أسماء الداعين]',k:'d',g:5});return out;}
+ for(let i=0;i<names.length;i+=2)out.push({t:names.slice(i,i+2).join('   •   '),k:'d',g:5});
+ return out;
+}
+function rel(def){const x=(st.vals[st.type]||{}).relation; if(x&&x.trim())return x.trim(); return st.gender==='f'&&(st.type==='grad'||st.type==='wafat')?'ابنة العم':def;}
 function lines(){
  const m=st.gender==='m',T=st.type;
  if(T==='birth')return[
@@ -169,6 +183,22 @@ function lines(){
   {t:'بقلوب يملؤها الفرح نزف '+rel('ابن العم'),k:'s',g:0},{t:v('groom'),k:'h',g:0},
   {t:'بمناسبة زواجه الميمون من كريمة',k:'s',g:1},{t:v('bride'),k:'n',g:1},
   {t:'بارك الله لهما وبارك عليهما وجمع بينهما في خير',k:'d',g:2},{t:'ألف ألف مبروك',k:'c',g:3}];
+ if(T==='wafat'){const f=st.gender==='f';return[
+  {t:'إنا لله وإنا إليه راجعون',k:'n',g:0},{t:'ولا حول ولا قوة إلا بالله العلي العظيم',k:'d',g:0},
+  {t:(f?'انتقلت':'انتقل')+' إلى رحمة الله تعالى '+rel('ابن العم'),k:'s',g:1},{t:v('name'),k:'h',g:1},
+  {t:'سائلين العلي القدير أن '+(f?'يرحمها':'يرحمه')+' رحمة الأبرار',k:'d',g:2},{t:(f?'ويحشرها':'ويحشره')+' مع النبي الأعظم محمد وآله الأطهار',k:'d',g:2},{t:'وأن يلهمنا و'+(f?'أهلها وذويها':'أهله وذويه')+' الصبر والسلوان',k:'d',g:2}];}
+ if(T==='aza'){const a=st.vals.aza||{};const sec=(title,txt,g)=>{const ls=(txt||'').split('\n').map(x=>x.trim()).filter(Boolean);return ls.length?[{t:title,k:'c',g}].concat(ls.map(x=>({t:x,k:'d',g}))):[];};
+  const bur=sec('الدفن',a.burial,2);
+  return [{t:'إنا لله وإنا إليه راجعون',k:'n',g:0},{t:'ولا حول ولا قوة إلا بالله العلي العظيم',k:'d',g:0},
+  {t:v('name'),k:'h',g:1},{t:'في ذمة الله',k:'s',g:1}]
+  .concat(bur.length?bur:[{t:'الدفن',k:'c',g:2},{t:PH.burial,k:'d',g:2}])
+  .concat(sec('عزاء الرجال',a.men,3)).concat(sec('عزاء النساء',a.women,4));}
+ if(T==='invite'){const kin=((st.vals.invite||{}).kin||'').trim()||'ابنه';return[
+  {t:'بسم الله الرحمن الرحيم',k:'d',g:0},{t:'بارك الله لهما وبارك عليهما وجمع بينهما في خير',k:'d',g:0},
+  {t:'يتشرف',k:'s',g:1},{t:v('inviter'),k:'n',g:1},{t:'بدعوتكم لحضور حفل زواج '+kin,k:'s',g:1},{t:v('groom'),k:'h',g:1},
+  {t:'على كريمة',k:'s',g:2},{t:v('bride'),k:'n',g:2},
+  {t:'وذلك بمشيئة الله تعالى مساء يوم '+v('day'),k:'s',g:3},{t:v('date'),k:'n',g:3},{t:'في '+v('venue'),k:'s',g:3},
+  {t:'وبحضوركم يتم لنا الفرح والسرور',k:'c',g:4}].concat(invitersLines());}
  if(T==='aqd')return[
   {t:'بحمد الله وتوفيقه تم عقد قران '+rel('ابن العم'),k:'s',g:0},{t:v('groom'),k:'h',g:0},
   {t:'على كريمة',k:'s',g:1},{t:v('bride'),k:'n',g:1},
@@ -191,13 +221,13 @@ function curLines(){return (st.manual&&st.manualLines?st.manualLines:lines()).fi
 const PALETTES=[
  {name:'كحلي',p:'#1F3F5B'},{name:'عنابي',p:'#5E2440'},{name:'وردي',p:'#7A3150'},{name:'زيتوني',p:'#26584A'},
  {name:'أزرق مخضر',p:'#23495A'},{name:'بنفسجي',p:'#4A3B6B'},{name:'بني',p:'#5C4024'},{name:'أسود',p:'#22262A'}];
-const TAGS=['مولود جديد','زواج','عقد قران','خطوبة','تخرج','تهنئة','خبر'];
+const TAGS=['مولود جديد','زواج','دعوة زواج','عقد قران','وفاة','عزاء','خطوبة','تخرج','تهنئة','خبر'];
 function hex2rgb(h){h=h.replace('#','');return[parseInt(h.substr(0,2),16),parseInt(h.substr(2,2),16),parseInt(h.substr(4,2),16)];}
 function rgb2hex(a){return'#'+a.map(x=>Math.round(Math.max(0,Math.min(255,x))).toString(16).padStart(2,'0')).join('');}
 function mix(a,b,t){const A=hex2rgb(a),B=hex2rgb(b);return rgb2hex(A.map((x,i)=>x+(B[i]-x)*t));}
 function lum(h){const c=hex2rgb(h).map(x=>{x/=255;return x<=0.03928?x/12.92:Math.pow((x+0.055)/1.055,2.4);});return 0.2126*c[0]+0.7152*c[1]+0.0722*c[2];}
 function paletteFrom(p){let q=p;let n=0;while(lum(q)>0.09&&n<20){q=mix(q,'#000000',0.08);n++;}return{p:q,bg:mix(mix(q,'#FFFFFF',0.95),'#F7F4EE',0.5),body:mix(q,'#5A5A5A',0.55)};}
-function theme(){const T=TYPES[st.type];const base=st.color?paletteFrom(st.color):{p:T.p,bg:T.bg,body:T.body};return Object.assign({},base,{tag:(st.tag&&st.tag.trim())?st.tag.trim():T.tag});}
+function theme(){const T=TYPES[st.type];const base=st.color?paletteFrom(st.color):{p:T.p,bg:T.bg,body:T.body};const sad=st.type==='wafat'||st.type==='aza';return Object.assign({},base,{gold:sad?'#8E8F91':GOLD,goldL:sad?'#C9CACC':GOLD_L,tag:(st.tag&&st.tag.trim())?st.tag.trim():T.tag});}
 const swEl=document.getElementById('swatches'),chipsEl=document.getElementById('chips'),tagIn=document.getElementById('tagInput');
 function buildSwatches(){
  swEl.textContent='';
@@ -222,11 +252,19 @@ function buildFields(){
   const [key,label,def,multi]=f;
   if(key==='gender'){
    const wrap=document.createElement('div');wrap.className='field';
-   const lb=document.createElement('label');lb.textContent=st.type==='birth'?'المولود':'الخريج';wrap.appendChild(lb);
+   const lb=document.createElement('label');lb.textContent=st.type==='birth'?'المولود':(st.type==='grad'?'الخريج':'المتوفى');wrap.appendChild(lb);
    const seg=document.createElement('div');seg.className='seg';
-   [['m',st.type==='birth'?'ذكر':'خريج'],['f',st.type==='birth'?'أنثى':'خريجة']].forEach(([g,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',st.gender===g);b.onclick=()=>{st.gender=g;[...seg.children].forEach((c,i)=>c.setAttribute('aria-pressed',(i===0?'m':'f')===g));draw();};seg.appendChild(b);});
+   [['m',st.type==='grad'?'خريج':'ذكر'],['f',st.type==='grad'?'خريجة':'أنثى']].forEach(([g,t])=>{const b=document.createElement('button');b.type='button';b.textContent=t;b.setAttribute('aria-pressed',st.gender===g);b.onclick=()=>{st.gender=g;[...seg.children].forEach((c,i)=>c.setAttribute('aria-pressed',(i===0?'m':'f')===g));draw();};seg.appendChild(b);});
    wrap.appendChild(seg);fieldsEl.appendChild(wrap);return;
   }
+  if(def==='toggle'||label==='toggle'){
+   const w=document.createElement('div');w.className='check';
+   const cb=document.createElement('input');cb.type='checkbox';cb.id='f_'+st.type+'_'+key;cb.checked=!!st.vals[st.type][key];
+   const lb=document.createElement('label');lb.htmlFor=cb.id;lb.textContent='إضافة أسماء الداعين';
+   cb.onchange=()=>{st.vals[st.type][key]=cb.checked;buildFields();draw();};
+   w.appendChild(cb);w.appendChild(lb);fieldsEl.appendChild(w);return;
+  }
+  if(key==='inviters'&&!st.vals[st.type].invOn)return;
   const wrap=document.createElement('div');wrap.className='field';
   const id='f_'+st.type+'_'+key;
   const lb=document.createElement('label');lb.htmlFor=id;lb.textContent=label;
@@ -297,7 +335,7 @@ function fit(ls,top){
 function wmWidth(fw){return 380*(fw/2+40)/134.5;}
 function drawFrame(T,fx,fy,fw,fh){
  const fr=fw/2;frame={x:fx+10,y:fy+10,w:fw-20,h:fh-20};
- arch(fx,fy,fw,fh,fr,24);ctx.fillStyle=T.bg;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=GOLD;ctx.stroke();
+ arch(fx,fy,fw,fh,fr,24);ctx.fillStyle=T.bg;ctx.fill();ctx.lineWidth=2;ctx.strokeStyle=T.gold;ctx.stroke();
  const ix=fx+10,iy=fy+10,iw=fw-20,ih=fh-20;
  ctx.save();arch(ix,iy,iw,ih,iw/2,16);ctx.clip();
  if(st.img){const im=st.img;const base=Math.max(iw/im.naturalWidth,ih/im.naturalHeight)*st.zoom;const dw=im.naturalWidth*base,dh=im.naturalHeight*base;
@@ -309,8 +347,8 @@ function drawFrame(T,fx,fy,fw,fh){
 function drawText(T,lay,ty){
  ctx.direction='rtl';ctx.textAlign='center';ctx.textBaseline='middle';
  lay.items.forEach(it=>{
-  if(it.rule){ctx.fillStyle=GOLD;ctx.fillRect(W/2-28,ty+it.y,56,1.5);return;}
-  ctx.font=it.f;ctx.fillStyle=it.k==='s'||it.k==='d'?T.body:(it.k==='c'?GOLD:T.p);
+  if(it.rule){ctx.fillStyle=T.gold;ctx.fillRect(W/2-28,ty+it.y,56,1.5);return;}
+  ctx.font=it.f;ctx.fillStyle=it.k==='s'||it.k==='d'?T.body:(it.k==='c'?T.gold:T.p);
   ctx.fillText(it.row,W/2,ty+it.y);
  });
 }
@@ -318,7 +356,7 @@ function drawFooter(T){
  const fyy=H-54-14,yr=String(new Date().getFullYear());ctx.direction='ltr';ctx.textBaseline='middle';ctx.fillStyle=T.p;
  ctx.font=FW()+' 24px '+FF();ctx.textAlign='left';ctx.fillText(yr,72,fyy);const y4=ctx.measureText(yr).width;
  ctx.font=FW()+' 24px '+FF();ctx.textAlign='center';ctx.fillText('bineissanews',W/2,fyy);const nw=ctx.measureText('bineissanews').width;
- ctx.fillStyle=GOLD;ctx.fillRect(72+y4+22,fyy,(W/2-nw/2-22)-(72+y4+22),1);
+ ctx.fillStyle=T.gold;ctx.fillRect(72+y4+22,fyy,(W/2-nw/2-22)-(72+y4+22),1);
  const iconsW=26+14+24;ctx.fillRect(W/2+nw/2+22,fyy,(W-72-iconsW-22)-(W/2+nw/2+22),1);
  drawIcons(W-72-iconsW,fyy,T.p);ctx.direction='rtl';
 }
@@ -331,10 +369,10 @@ function draw(){
  const ls=curLines();const hasLogo=logo.complete&&logo.naturalWidth;
  if(st.design==='light'){
   
-  ctx.save();ctx.strokeStyle=GOLD;ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect?ctx.roundRect(32,32,W-64,H-64,20):ctx.rect(32,32,W-64,H-64);ctx.stroke();ctx.restore();
+  ctx.save();ctx.strokeStyle=T.gold;ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect?ctx.roundRect(32,32,W-64,H-64,20):ctx.rect(32,32,W-64,H-64);ctx.stroke();ctx.restore();
   const lw=104,lh=hasLogo?lw*logo.naturalHeight/logo.naturalWidth:112;
   if(hasLogo)ctx.drawImage(tinted(T.p),(W-lw)/2,64,lw,lh);
-  const tagY=64+lh+16;pill(T.tag,W/2,tagY,GOLD,T.p);
+  const tagY=64+lh+16;pill(T.tag,W/2,tagY,T.gold,T.p);
   const top=tagY+52+24;const R=fit(ls,top);
   if(hasLogo){ctx.save();ctx.globalAlpha=0.045;watermark(tinted(T.p),wmWidth(R.fw),top+R.fw/2);ctx.restore();}
   drawFrame(T,(W-R.fw)/2,top,R.fw,R.fh);drawText(T,R.lay,top+R.fh+36);drawFooter(T);return;
@@ -344,7 +382,7 @@ function draw(){
  ctx.fillStyle=T.p;ctx.fillRect(0,0,W,bandH);
  if(hasLogo){ctx.save();ctx.beginPath();ctx.rect(0,0,W,bandH);ctx.clip();ctx.globalAlpha=0.07;watermark(logo,wmWidth(fw),fy+fw/2);ctx.restore();
   const sw=92,sh=sw*logo.naturalHeight/logo.naturalWidth;ctx.drawImage(logo,W-72-sw,56,sw,sh);}
- ctx.font=FW()+' 24px '+FF();const tw=ctx.measureText(T.tag).width+52;pill(T.tag,72+tw/2,80,GOLD_L,GOLD_L);
+ ctx.font=FW()+' 24px '+FF();const tw=ctx.measureText(T.tag).width+52;pill(T.tag,72+tw/2,80,T.goldL,T.goldL);
  drawFrame(T,fx,fy,fw,fh);drawText(T,R.lay,fy+fh+36);drawFooter(T);
 }
 function drawIcons(x,cy,color){
