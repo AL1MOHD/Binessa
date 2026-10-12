@@ -411,11 +411,11 @@ function layout(ls,s,maxW){
 }
 const FONTS={display:{fam:"'Thmanyah Serif Display','Thmanyah Sans','Segoe UI',Tahoma,sans-serif",w:'700'},text:{fam:"'Thmanyah Serif Text','Thmanyah Sans','Segoe UI',Tahoma,sans-serif",w:'500'}};
 function FF(){return FONTS[st.font].fam;}function FW(){return FONTS[st.font].w;}
-const SIZES=[[600,640],[560,600],[520,560],[480,520],[440,480],[400,440]];
+const SIZES=[[520,560],[480,520],[440,480],[400,440]]; // one photo size for every template; smaller only if a long text cannot fit
 function fitScale(ls,avail,maxW){let s=1,L=layout(ls,1,maxW);while(L.h>avail&&s>0.6){s-=0.02;L=layout(ls,s,maxW);}return{s,L};}
 function fit(ls,top){
  const bottomLimit=1222,maxW=888;
- for(const [fw,fh] of SIZES){const r=fitScale(ls,bottomLimit-(top+fh+36),maxW);if(r.s>=0.8&&r.L.h<=bottomLimit-(top+fh+36))return{fw,fh,lay:r.L};}
+ for(const [fw,fh] of SIZES){const r=fitScale(ls,bottomLimit-(top+fh+36),maxW);if(r.L.h<=bottomLimit-(top+fh+36))return{fw,fh,lay:r.L};}
  const [fw,fh]=SIZES[SIZES.length-1];return{fw,fh,lay:fitScale(ls,bottomLimit-(top+fh+36),maxW).L};
 }
 // hidden logo: its inner arch line (inner edge radius 134.5 of 380) sits 40px outside the photo, so both lines show
@@ -462,7 +462,7 @@ function draw(){
   const tagY=64+lh+16;pill(T.tag,W/2,tagY,T.gold,T.p);
   const top=tagY+52+24;const R=fit(ls,top);
   if(hasLogo){ctx.save();ctx.globalAlpha=0.045;watermark(tinted(T.p),wmWidth(R.fw),top+R.fw/2);ctx.restore();}
-  drawFrame(T,(W-R.fw)/2,top,R.fw,R.fh);drawText(T,R.lay,top+R.fh+36);drawFooter(T);return;
+  drawFrame(T,(W-R.fw)/2,top,R.fw,R.fh);drawText(T,R.lay,top+R.fh+36+Math.max(0,(1222-(top+R.fh+36)-R.lay.h)/2));drawFooter(T);return;
  }
  const top=180;const R=fit(ls,top);const fw=R.fw,fh=R.fh,fx=(W-fw)/2,fy=top;
  const bandH=fy+fh/2+20;
@@ -470,7 +470,7 @@ function draw(){
  if(hasLogo){ctx.save();ctx.beginPath();ctx.rect(0,0,W,bandH);ctx.clip();ctx.globalAlpha=0.07;watermark(logo,wmWidth(fw),fy+fw/2);ctx.restore();
   const sw=92,sh=sw*logo.naturalHeight/logo.naturalWidth;ctx.drawImage(logo,W-72-sw,56,sw,sh);}
  ctx.font=FW()+' 24px '+FF();const tw=ctx.measureText(T.tag).width+52;pill(T.tag,72+tw/2,80,T.goldL,T.goldL);
- drawFrame(T,fx,fy,fw,fh);drawText(T,R.lay,fy+fh+36);drawFooter(T);
+ drawFrame(T,fx,fy,fw,fh);drawText(T,R.lay,fy+fh+36+Math.max(0,(1222-(fy+fh+36)-R.lay.h)/2));drawFooter(T);
 }
 function drawIcons(x,cy,color){
  ctx.save();ctx.strokeStyle=color;ctx.fillStyle=color;ctx.lineWidth=1.7*26/24;ctx.lineJoin='round';ctx.lineCap='round';
