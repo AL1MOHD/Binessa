@@ -204,7 +204,7 @@ input[type=range]{width:100%;accent-color:var(--accent);min-height:36px}
 <div class="card">
 <h2>٦. ملاحظات</h2>
 <div class="chips" id="notes"></div>
-<div class="field" style="margin-top:12px"><label for="f_note">ملاحظة أخرى</label><input type="text" id="f_note" placeholder="مثل: يوجد سحب هدايا للحضور"></div>
+<div class="field" style="margin-top:12px"><label for="f_note">ملاحظات أخرى (ملاحظة في كل سطر)</label><textarea id="f_note" placeholder="يوجد سحب هدايا للحضور&#10;يوجد بث مباشر"></textarea></div>
 </div>
 
 <div class="card">
@@ -523,6 +523,7 @@ const DISP="'Thmanyah Serif Display','Thmanyah Sans','Segoe UI',Tahoma,serif";
 
 // palettes: bg, ink (main text), sub (secondary), title, accent (roles, headings), gold (rules, frames), logo
 const PALETTES={
+ gold:{name:'ذهبي المجلس',bg:'#F1E6C8',ink:'#3B2C14',sub:'#6E5A36',title:'#5C4520',accent:'#7A5A22',gold:'#A8832F',logo:'#5C4520'},
  green:{name:'أخضر المولد',bg:'#F4F1E8',ink:'#20302A',sub:'#5A665F',title:'#2D6248',accent:'#2D6248',gold:'#A9873F',logo:'#2D6248'},
  mourn:{name:'أسود الحِداد',bg:'#151413',ink:'#F2EDE5',sub:'#B4ADA3',title:'#F2EDE5',accent:'#D2605C',gold:'#8E3B38',logo:'#F2EDE5'},
  brown:{name:'بني المجلس',bg:'#5B4637',ink:'#FBF5EA',sub:'#E4D5BF',title:'#FBF5EA',accent:'#E8CB93',gold:'#CDAE76',logo:'#FBF5EA'},
@@ -530,12 +531,13 @@ const PALETTES={
  navy:{name:'كحلي',bg:'#F7F4EE',ink:'#1F3F5B',sub:'#56656F',title:'#1F3F5B',accent:'#1F3F5B',gold:'#A6802F',logo:'#1F3F5B'}
 };
 const TYPES={
+ weekly:{label:'المجلس الأسبوعي',desc:'المجلس الحسيني كل أسبوع',pal:'gold',invite:'يدعوكم مجلس البن عيسى لحضور',title:'المجلس الحسيني الأسبوعي',roles:['الخطيب']},
  mawlid:{label:'مولد',desc:'ذكرى ميلاد أحد أهل البيت',pal:'green',invite:'يدعوكم مجلس البن عيسى لحضور الحفل البهيج بذكرى',title:'ميلاد',roles:['العريف','القرآن','الكلمة','الشعر']},
  wafat:{label:'وفاة',desc:'ذكرى وفاة أو استشهاد',pal:'mourn',invite:'يدعوكم مجلس البن عيسى لإحياء ذكرى',title:'استشهاد',roles:['الخطيب','الرادود']},
  lecture:{label:'محاضرة',desc:'لقاء أو سلسلة لقاءات',pal:'brown',invite:'يتشرف مجلس البن عيسى بدعوتكم لحضور',title:'',roles:['تقديم']},
  general:{label:'مناسبة عامة',desc:'أي إعلان آخر للمجلس',pal:'sand',invite:'يدعوكم مجلس البن عيسى',title:'',roles:[]}
 };
-const NOTE_PRESETS=['للرجال فقط','يوجد مكان للنساء','الدعوة عامة'];
+const NOTE_PRESETS=['للرجال فقط','يوجد مكان مخصص للنساء','الدعوة عامة'];
 
 const st={type:'mawlid',pal:null,dirty:{},people:[],notes:new Set(),drag:null};
 const $=id=>document.getElementById(id);
@@ -663,13 +665,19 @@ function blocks(P){
  const inv=val('invite');
  if(inv)B.push({h:s=>44*s,draw:(y,s)=>{ctx.font=font(500,30*s,SANS);ctx.fillStyle=P.sub;ctx.fillText(inv,W/2,y+22*s);}});
  const title=val('title')||'[عنوان المناسبة]';
- B.push({h:s=>{const z=fitSize(title,700,DISP,150*s,940,40);return z*1.25;},draw:(y,s)=>{const z=fitSize(title,700,DISP,150*s,940,40);ctx.font=font(700,z,DISP);ctx.fillStyle=P.title;ctx.fillText(title,W/2,y+z*0.62);}});
+ // title and subtitle are one block, so the subtitle sits close under the title
  const subs=val('subtitle').split('\n').map(x=>x.trim()).filter(Boolean);
- if(subs.length)B.push({h:s=>subs.length*54*s,draw:(y,s)=>{subs.forEach((t,i)=>{const z=fitSize(t,700,DISP,40*s,920,22);ctx.font=font(700,z,DISP);ctx.fillStyle=P.ink;ctx.fillText(t,W/2,y+27*s+i*54*s);});}});
+ const tz=s=>fitSize(title,700,DISP,150*s,940,40);
+ const tBottom=s=>{const z=tz(s);ctx.font=font(700,z,DISP);ctx.textBaseline='middle';const m=ctx.measureText(title);return z*0.56+(m.actualBoundingBoxDescent||z*0.4);};
+ B.push({h:s=>tBottom(s)+(subs.length?22*s+subs.length*54*s:0),draw:(y,s)=>{
+  const z=tz(s);ctx.font=font(700,z,DISP);ctx.fillStyle=P.title;ctx.fillText(title,W/2,y+z*0.56);
+  let ty=y+tBottom(s)+22*s-4*s;
+  subs.forEach((t,i)=>{const zz=fitSize(t,700,DISP,40*s,920,22);ctx.font=font(700,zz,DISP);ctx.fillStyle=P.ink;ctx.fillText(t,W/2,ty+27*s+i*54*s);});
+ }});
  B.push({h:s=>22*s,draw:(y,s)=>ornament(P,y+11*s,s)});
  const ppl=st.people;
  if(ppl.length){
-  const N=ppl.length,gap=22,maxW={1:330,2:300,3:262,4:214,5:178}[N];
+  const N=ppl.length,gap=22,maxW={1:st.type==='weekly'?360:330,2:300,3:262,4:214,5:178}[N];
   const cw=s=>Math.min(maxW,(960-gap*(N-1))/N)*s;
   const ph=s=>cw(s)*1.22;
   B.push({h:s=>ph(s)+18*s+34*s+80*s,draw:(y,s)=>{
@@ -725,11 +733,15 @@ function blocks(P){
   ctx.font=font(700,27*s,SANS);ctx.fillStyle=P.accent;ctx.fillText('البرنامج',W/2,y+16*s);
   prog.forEach((t,i)=>{const z=fitSize(t,500,SANS,27*s,900,14);ctx.font=font(500,z,SANS);ctx.fillStyle=P.ink;ctx.fillText(t,W/2,y+54*s+i*40*s);});
  }});
- const notes=[...NOTE_PRESETS.filter(n=>st.notes.has(n)),val('note')].filter(Boolean);
- if(notes.length)B.push({h:s=>54*s,draw:(y,s)=>{
-  ctx.font=font(700,24*s,SANS);const ws=notes.map(n=>ctx.measureText(n).width+48*s);const gap=14*s;
-  const total=ws.reduce((a,b)=>a+b,0)+gap*(notes.length-1);let x=W/2+total/2;
-  notes.forEach((n,i)=>{const w=ws[i];x-=w;ctx.save();ctx.strokeStyle=P.gold;ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,y,w,50*s,25*s):ctx.rect(x,y,w,50*s);ctx.stroke();ctx.fillStyle=P.accent;ctx.fillText(n,x+w/2,y+27*s);ctx.restore();x-=gap;});
+ const notes=[...NOTE_PRESETS.filter(n=>st.notes.has(n)),...val('note').split('\n').map(x=>x.trim())].filter(Boolean);
+ // notes as pills, wrapped into centred rows that fit the poster width
+ const noteRows=s=>{ctx.font=font(700,24*s,SANS);const gap=14*s,maxW=940;const rows=[];let cur=[],w=0;
+  notes.forEach(n=>{const pw=Math.min(ctx.measureText(n).width+48*s,maxW);if(cur.length&&w+gap+pw>maxW){rows.push({items:cur,w});cur=[];w=0;}w+=(cur.length?gap:0)+pw;cur.push({n,pw});});
+  if(cur.length)rows.push({items:cur,w});return rows;};
+ if(notes.length)B.push({h:s=>{const r=noteRows(s).length;return (r*50+(r-1)*12)*s;},draw:(y,s)=>{
+  const gap=14*s;noteRows(s).forEach((row,ri)=>{let x=W/2+row.w/2;const ry=y+ri*62*s;
+   row.items.forEach(({n,pw})=>{x-=pw;ctx.save();ctx.font=font(700,fitSize(n,700,SANS,24*s,pw-36*s,14),SANS);ctx.strokeStyle=P.gold;ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect?ctx.roundRect(x,ry,pw,50*s,25*s):ctx.rect(x,ry,pw,50*s);ctx.stroke();ctx.fillStyle=P.accent;ctx.fillText(n,x+pw/2,ry+27*s);ctx.restore();x-=gap;});
+  });
  }});
  return B;
 }
@@ -790,10 +802,10 @@ $('msave').onclick=async()=>{
 };
 
 // start with a filled example so the first view shows the result
-$('f_subtitle').value='الإمام جعفر الصادق عليه السلام';
+$('f_subtitle').value='مولد السيدة زينب عليها السلام';
 $('f_day').value='يوم الأربعاء ليلة الخميس';$('f_time').value='8:00 مساءً';
-$('f_hijri').value='17 ربيع الأول 1448هـ';$('f_place').value='مجلس البن عيسى';
-setType('mawlid');
+$('f_hijri').value='2 جمادى الأولى 1448هـ';$('f_area').value='حي الدانة بسيهات';$('f_place').value='مجلس البن عيسى';
+setType('weekly');
 const fontsReady=document.fonts?Promise.all([document.fonts.load("700 40px 'Thmanyah Serif Display'","أب"),document.fonts.load("500 30px 'Thmanyah Sans'","أب"),document.fonts.load("700 30px 'Thmanyah Sans'","أب")]):Promise.resolve();
 logo.onload=()=>draw();arch.onload=()=>draw();
 fontsReady.then(draw,draw);
